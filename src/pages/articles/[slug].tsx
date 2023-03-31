@@ -41,12 +41,12 @@ export const getStaticPaths: GetStaticPaths<IPostUrl> = async () => {
           slug: post.slug,
         },
       })),
-      fallback: false,
+      fallback: 'blocking',
     }
   } catch (error) {
     return {
       paths: [],
-      fallback: false,
+      fallback: 'blocking',
     }
   }
 }

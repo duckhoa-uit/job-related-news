@@ -163,12 +163,13 @@ const HomePage = ({ articles, topics }) => {
   )
 }
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   return {
     props: {
       articles: (await postApi.getAll()).data.data,
       topics: (await categoryApi.getTrendingTopics()).data.data.slice(0, 4),
     },
+    revalidate: 10,
   }
 }
 
