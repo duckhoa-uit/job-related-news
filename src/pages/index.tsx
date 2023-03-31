@@ -163,13 +163,17 @@ const HomePage = ({ articles, topics }) => {
   )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ req, res }) {
+  res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=10, stale-while-revalidate=59'
+  )
+
   return {
     props: {
       articles: (await postApi.getAll()).data.data,
       topics: (await categoryApi.getTrendingTopics()).data.data.slice(0, 4),
     },
-    revalidate: 10,
   }
 }
 
