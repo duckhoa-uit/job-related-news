@@ -63,6 +63,7 @@ export const getStaticProps: GetStaticProps<IPostProps, IPostUrl> = async ({
       post,
       comments,
     },
+    revalidate: 10,
   }
 }
 
