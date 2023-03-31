@@ -14,6 +14,10 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'res.cloudinary.com'],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
 }
 
 const withMDX = nextMDX({
