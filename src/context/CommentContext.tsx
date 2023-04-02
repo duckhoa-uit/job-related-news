@@ -2,8 +2,14 @@ import { createContext, ReactNode, useEffect, useState } from 'react'
 import cloneDeep from 'lodash/cloneDeep'
 import { useRouter } from 'next/router'
 import { commentApi } from '@/api'
-import { CreateCommentPayload } from '@/models/comment'
+import {
+  Comment,
+  CreateCommentPayload,
+  UpdateCommentPayload,
+} from '@/models/comment'
 import toast from 'react-hot-toast'
+import { CommentValuesType } from './types'
+import { isEmpty } from 'lodash'
 
 export const INITIAL_JSON = {
   demoUser: 'juliusomo',
@@ -86,10 +92,23 @@ export const INITIAL_JSON = {
   showReset: false,
 }
 
-export const CommentsContext = createContext({})
+const defaultValues: CommentValuesType = {
+  comments: [],
+  setComments: () => null,
+  addComment: () => null,
+  updateComment: () => null,
+  commentToDelete: {
+    commentId: '',
+    parentId: '',
+  },
+  setCommentToDelete: () => null,
+  deleteComment: () => null,
+  showModal: false,
+  toggleDeleteModal: () => null,
+}
+export const CommentsContext = createContext(defaultValues)
 
 export const CommentsProvider = (props: { children: ReactNode }) => {
-  const [demoUser, setDemoUser] = useState(INITIAL_JSON.demoUser)
   const [allData, setAllData] = useState(() => {
     if (typeof window !== 'undefined') {
       const storage = localStorage.getItem('interactiveComments')
@@ -103,7 +122,7 @@ export const CommentsProvider = (props: { children: ReactNode }) => {
     return INITIAL_JSON
   })
   const router = useRouter()
-  const [comments, setComments] = useState([])
+  const [comments, setComments] = useState<Comment[]>([])
 
   // Delete Comment Modal
   const [showModal, setShowModal] = useState(false)
@@ -111,38 +130,27 @@ export const CommentsProvider = (props: { children: ReactNode }) => {
     setShowModal(!showModal)
   }
   const [commentToDelete, setCommentToDelete] = useState({
-    groupId: '',
+    parentId: '',
     commentId: '',
   })
 
   /**
    * Delete comment and their child replies, if they exist
    */
-  const handleDeleteComment = () => {
-    // Create deep copy of the comments context state
-    let updatedComments = cloneDeep(allData)
+  const handleDeleteComment = async () => {
+    try {
+      const newComment = (await commentApi.delete(commentToDelete.commentId))
+        .data
+      console.log(
+        '🚀 ~ file: CommentContext.tsx:139 ~ handleDeleteComment ~ newComment:',
+        newComment
+      )
+      await fetchCommentsBySlug(router.query.slug as string)
 
-    // Determine if this is a parent comment or reply
-    const { groupId, commentId } = commentToDelete
-    const isParent = groupId === commentId
-
-    // Delete comment and child replies
-    if (isParent) {
-      // If comment has replies, delete comment's replies as well
-      if (updatedComments.comments[groupId].hasReplies) {
-        delete updatedComments.replies[groupId]
-      }
-      // Delete main comment
-      delete updatedComments.comments[groupId]
+      toast.success('Your comment has been deleted.')
+    } catch (error: any) {
+      toast.error(error.message)
     }
-    // Delete single reply
-    else {
-      delete updatedComments.replies[groupId][commentId]
-    }
-    // Show Reset Button
-    updatedComments.showReset = true
-    // Update context state
-    setAllData(updatedComments)
     // Hide Delete Modal
     handleModalToggle()
   }
@@ -154,17 +162,73 @@ export const CommentsProvider = (props: { children: ReactNode }) => {
         parentId,
         postSlug: router.query.slug as string,
       }
-      await commentApi.create(payload)
+      const newComment = (await commentApi.create(payload)).data
       await fetchCommentsBySlug(router.query.slug as string)
+
       toast.success('Your comment has been added.')
     } catch (error: any) {
-      console.log(
-        '🚀 ~ file: CommentContext.tsx:158 ~ handleAddComment ~ error:',
-        error
-      )
       toast.error(error.message)
     }
   }
+  const handleUpdateComment = async (
+    id: string,
+    comment: UpdateCommentPayload
+  ) => {
+    try {
+      const newComment = (await commentApi.update(id, comment)).data
+      await fetchCommentsBySlug(router.query.slug as string)
+
+      toast.success('Your comment has been updated.')
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+  }
+
+  // const saveNewComment = (cmt: Comment) => {
+  //   const newComments = [...comments]
+
+  //   // New comment is parent
+  //   if (!cmt.parentId) {
+  //     newComments.splice(0, 0, cmt)
+  //     setComments(newComments)
+  //     return
+  //   }
+
+  //   // New comment is child
+  //   let founded = false
+  //   let loopedCount = 0
+  //   while (loopedCount < comments.length) {
+  //     const findComment = (c: Comment) => {
+  //       if (c.parentId) {
+  //         loopedCount = loopedCount + 1
+
+  //         console.log(
+  //           '🚀 ~ file: CommentContext.tsx:197 ~ saveNewComment ~ loopedCount:',
+  //           comments,
+  //           loopedCount,
+  //           c
+  //         )
+  //       }
+  //       if (c.id === cmt.parentId) {
+  //         const currentChildren = Array.isArray(c.children)
+  //           ? [...c.children]
+  //           : []
+  //         currentChildren.push(c)
+  //         c.children = currentChildren
+  //         founded = true
+  //         return
+  //       }
+  //       if (!isEmpty(c.children)) {
+  //         c.children.forEach(findComment)
+  //       }
+  //     }
+  //     newComments.forEach(findComment)
+  //   }
+
+  //   if (founded) {
+  //     setComments(newComments)
+  //   }
+  // }
 
   const fetchCommentsBySlug = async (slug: string) => {
     try {
@@ -174,7 +238,6 @@ export const CommentsProvider = (props: { children: ReactNode }) => {
       setComments(resComments)
     } catch (error: any) {
       toast.error(error.message)
-      console.log('🚀 ~ file: CommentContext.tsx:162 ~ ; ~ error:', error)
     }
   }
 
@@ -188,13 +251,15 @@ export const CommentsProvider = (props: { children: ReactNode }) => {
   return (
     <CommentsContext.Provider
       value={{
-        demoUserValue: [demoUser, setDemoUser],
-        allDataValue: [allData, setAllData],
-        modalValue: [showModal, handleModalToggle, handleDeleteComment],
-        commentToDeleteValue: [commentToDelete, setCommentToDelete],
         comments,
         setComments,
-        handleAddComment,
+        addComment: handleAddComment,
+        updateComment: handleUpdateComment,
+        commentToDelete,
+        setCommentToDelete,
+        deleteComment: handleDeleteComment,
+        showModal,
+        toggleDeleteModal: handleModalToggle,
       }}
     >
       {props.children}

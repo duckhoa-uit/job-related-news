@@ -19,3 +19,4 @@ export interface CreateCommentPayload {
   postSlug: string
   parentId: string | null
 }
+export type UpdateCommentPayload = Partial<CreateCommentPayload>

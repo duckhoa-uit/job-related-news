@@ -11,6 +11,8 @@ import { LoginParams } from '../context/types'
 import { ErrorResponse } from '@/models'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
+import PrimaryButton from '@/components/buttons/PrimaryButton'
+import { useState } from 'react'
 
 interface FormInputs {
   email: string
@@ -30,6 +32,7 @@ const schema = yup.object().shape({
 const LoginPage = () => {
   const router = useRouter()
   const { login } = useAuth()
+  const [loading, setLoading] = useState(false)
 
   const formMethods = useForm<FormInputs>({
     defaultValues,
@@ -37,21 +40,21 @@ const LoginPage = () => {
   })
 
   const onSubmit = async (values: FormInputs) => {
+    setLoading(true)
+
     const payload: LoginParams = {
       email: values.email,
       password: values.password,
     }
-    login(payload, (error) => toast.error(error.message))
+    await login(payload, (error) => toast.error(error.message))
+
+    setLoading(false)
   }
 
   return (
     <>
       <Head>
         <title>Login</title>
-        {/* <meta
-          name="description"
-          content="Things I’ve made trying to put my dent in the universe."
-        /> */}
       </Head>
       <div className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md md:mt-0 xl:p-0">
@@ -75,15 +78,19 @@ const LoginPage = () => {
                   type="password"
                   placeholder="********"
                 />
-                <button
+                {/* <button
                   type="submit"
-                  className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="group relative flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    {/* <LockClosedIcon className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" aria-hidden="true" /> */}
-                  </span>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3"></span>
                   Sign in
-                </button>
+                </button> */}
+                <PrimaryButton
+                  text="Sign in"
+                  type="submit"
+                  loading={loading}
+                  loadingText="Signing"
+                />
                 <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                   Don’t have an account yet?{' '}
                   <Link

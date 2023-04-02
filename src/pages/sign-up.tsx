@@ -9,6 +9,8 @@ import { useRouter } from 'next/router'
 import { FormProvider, useForm } from 'react-hook-form'
 import * as yup from 'yup'
 import toast from 'react-hot-toast'
+import { useState } from 'react'
+import PrimaryButton from '@/components/buttons/PrimaryButton'
 
 interface FormInputs {
   name: string
@@ -23,6 +25,7 @@ const defaultValues: FormInputs = {
 }
 
 const schema = yup.object().shape({
+  name: yup.string().required(),
   email: yup.string().required(),
   password: yup.string().required(),
 })
@@ -33,20 +36,23 @@ const SignUpPage = () => {
     defaultValues,
     resolver: yupResolver(schema),
   })
+  const [loading, setLoading] = useState(false)
 
   const onSubmit = async (values: FormInputs) => {
     try {
+      setLoading(true)
       const payload: RegisterParams = {
         name: values.name,
         email: values.email,
         password: values.password,
       }
-      const res = await authApi.register(payload)
-      console.log('🚀 ~ file: sign-up.tsx:44 ~ onSubmit ~ res:', res)
+      await authApi.register(payload)
       toast.success('Created account successful.')
       router.push('/login')
     } catch (error: any) {
       toast.error(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -86,26 +92,18 @@ const SignUpPage = () => {
                   type="password"
                   placeholder="********"
                 />
-                <button
+                {/* <button
                   type="submit"
                   className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg
-                      className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-                        clipRule="evenodd"
-                      ></path>
-                    </svg>{' '}
-                  </span>
                   Sign up
-                </button>
+                </button> */}
+                <PrimaryButton
+                  loading={loading}
+                  loadingText="Signing up"
+                  type="submit"
+                  text="Sign up"
+                />
                 <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                   Already have an account?{' '}
                   <Link

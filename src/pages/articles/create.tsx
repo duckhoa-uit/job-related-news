@@ -3,6 +3,7 @@ import { postApi } from '@/api/post-api'
 import Dropzone from '@/components/form-controls/Dropzone'
 import SelectField from '@/components/form-controls/SelectField'
 import TextField from '@/components/form-controls/TextField'
+import { LoadingDots } from '@/components/LoadingDots'
 import RichTextEditor from '@/components/RichTextEditor'
 import { SimpleLayout } from '@/components/SimpleLayout'
 import { OptionItem } from '@/models/common'
@@ -16,7 +17,7 @@ import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import * as yup from 'yup'
-
+import { Rings } from 'react-loader-spinner'
 interface FormInputs {
   title: string
   description: string
@@ -158,6 +159,25 @@ export default function CreateArticle() {
               >
                 Save
               </button>
+              <button
+                disabled
+                className="mt-8 w-40 rounded-full bg-black px-4 pt-2 pb-3 font-medium text-white hover:bg-black/80"
+              >
+                <span className="pt-4">
+                  <LoadingDots color="white" style="large" />
+                </span>
+              </button>
+            </div>
+
+            <div className="flex h-[250px] max-w-[670px] items-center justify-center">
+              <Rings
+                height="100"
+                width="100"
+                color="black"
+                radius="6"
+                visible={true}
+                ariaLabel="rings-loading"
+              />
             </div>
           </form>
         </FormProvider>

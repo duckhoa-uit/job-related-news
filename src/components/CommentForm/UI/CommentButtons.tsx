@@ -1,3 +1,5 @@
+import { ArrowTurnLeft } from '@/components/icons'
+import { LoadingDots } from '@/components/LoadingDots'
 import { HTMLProps, MouseEventHandler } from 'react'
 import {
   PlusIcon,
@@ -64,16 +66,16 @@ export function Minus(props: {
   )
 }
 
-export function Reply(props: {
+export function ReplyCommentBtn(props: {
   handleClick?: MouseEventHandler<HTMLButtonElement>
 }): JSX.Element {
   return (
     <button
-      className="text-moderateBlue hover:text-lightGrayishBlue fill-moderateBlue hover:fill-lightGrayishBlue dark:text-darkModeModerateBlue dark:hover:text-lightGrayishBlue dark:fill-darkModeModerateBlue dark:hover:fill-lightGrayishBlue flex flex-row items-center justify-center gap-2 font-medium"
+      className="flex flex-row items-center justify-center gap-2 rounded-lg py-2 px-3 text-sm font-medium text-black hover:bg-gray-200"
       onClick={props.handleClick}
       aria-label={'Add a comment reply'}
     >
-      <ReplyIcon />
+      <ArrowTurnLeft />
       Reply
     </button>
   )
@@ -116,6 +118,8 @@ export function Delete(props: {
 }
 
 type TextButtonProps = {
+  loading?: boolean
+  loadingText?: string
   label: string
   classStyle: string
   handleClick?: MouseEventHandler<HTMLButtonElement>
@@ -124,14 +128,24 @@ export function TextButton(props: TextButtonProps): JSX.Element {
   return (
     // inline-flex items-center gap-2 justify-center rounded-md py-2 px-3 text-sm outline-offset-2 transition active:transition-none bg-zinc-800 font-semibold text-zinc-100 hover:bg-zinc-700 active:bg-zinc-800 active:text-zinc-100/70 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:active:bg-zinc-700 dark:active:text-zinc-100/70 ml-4 flex-none
     <button
-      className={`ml-4 inline-flex flex-none items-center justify-center gap-2 rounded-md bg-zinc-800 py-2 px-3 text-sm font-semibold text-zinc-100 outline-offset-2 transition hover:bg-zinc-700 active:bg-zinc-800 active:text-zinc-100/70 active:transition-none dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:active:bg-zinc-700 dark:active:text-zinc-100/70 ${props.classStyle}`}
+      disabled={props.loading}
+      className={`inline-flex flex-none items-center justify-center gap-2 rounded-md bg-zinc-800 py-2 px-3 text-sm font-semibold text-zinc-100 outline-offset-2 transition hover:bg-zinc-700 active:bg-zinc-800 active:text-zinc-100/70 active:transition-none dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:active:bg-zinc-700 dark:active:text-zinc-100/70 ${props.classStyle}`}
       onClick={props.handleClick}
     >
-      {props.label}
+      {props.loading ? (
+        <>
+          <LoadingDots color="#fff" />
+          {props.loadingText}
+        </>
+      ) : (
+        props.label
+      )}
     </button>
   )
 }
 type PrimaryButtonProps = {
+  loading?: boolean
+  loadingText?: string
   label: string
   handleClick?: MouseEventHandler<HTMLButtonElement>
 } & HTMLProps<HTMLButtonElement>
@@ -139,7 +153,7 @@ export function PrimaryButton(props: PrimaryButtonProps): JSX.Element {
   return (
     <TextButton
       label={props.label}
-      classStyle={'bg-moderateBlue hover:bg-lightGrayishBlue'}
+      classStyle={'w-full'}
       handleClick={props.handleClick}
       {...props}
     />
@@ -147,42 +161,63 @@ export function PrimaryButton(props: PrimaryButtonProps): JSX.Element {
 }
 
 export function SecondaryButton(props: {
+  loading?: boolean
+  loadingText?: string
   label: string
   handleClick: MouseEventHandler<HTMLButtonElement>
 }): JSX.Element {
   return (
     <TextButton
+      loading={props.loading}
+      loadingText={props.loadingText}
       label={props.label}
-      classStyle={'bg-grayishBlue hover:bg-darkBlue w-full'}
+      classStyle={'w-full'}
       handleClick={props.handleClick}
     />
   )
 }
 
 export function ErrorButton(props: {
+  loading?: boolean
+  loadingText?: string
   label: string
   handleClick: MouseEventHandler<HTMLButtonElement>
 }): JSX.Element {
   return (
     <TextButton
+      loading={props.loading}
+      loadingText={props.loadingText}
       label={props.label}
-      classStyle={'bg-red-400 hover:bg-paleRed w-full'}
+      classStyle={'bg-red-600 hover:bg-red-700 w-full'}
       handleClick={props.handleClick}
     />
   )
 }
 
 export function SendButton(props: {
-  handleClick?: MouseEventHandler<HTMLButtonElement>
-}): JSX.Element {
-  return <PrimaryButton label={'Send'} handleClick={props.handleClick} />
-}
-
-export function ReplyButton(props: {
+  loading?: boolean
+  loadingText?: string
   handleClick?: MouseEventHandler<HTMLButtonElement>
 }): JSX.Element {
   return (
     <PrimaryButton
+      loading={props.loading}
+      loadingText="Sending"
+      label={'Send'}
+      handleClick={props.handleClick}
+    />
+  )
+}
+
+export function ReplyButton(props: {
+  loading?: boolean
+  loadingText?: string
+  handleClick?: MouseEventHandler<HTMLButtonElement>
+}): JSX.Element {
+  return (
+    <PrimaryButton
+      loading={props.loading}
+      loadingText="Replying"
       type="submit"
       label={'Reply'}
       handleClick={props.handleClick}
@@ -191,10 +226,14 @@ export function ReplyButton(props: {
 }
 
 export function UpdateButton(props: {
+  loading?: boolean
+  loadingText?: string
   handleClick?: MouseEventHandler<HTMLButtonElement>
 }): JSX.Element {
   return (
     <PrimaryButton
+      loading={props.loading}
+      loadingText="Updating"
       type="submit"
       label={'Update'}
       handleClick={props.handleClick}

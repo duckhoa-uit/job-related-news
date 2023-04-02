@@ -14,6 +14,7 @@ import Comments from '../CommentForm/Comment/Comments'
 import CommentForm from '../CommentForm/CommentForm'
 import { Container } from '../Container'
 import { Prose } from '../Prose'
+import LoginToComment from '../CommentForm/Comment/LoginToComment'
 function ArrowLeftIcon(props) {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" {...props}>
@@ -37,6 +38,7 @@ export function ArticleLayout({
   post,
   previousPathname = '',
 }: ArticleLayoutProps) {
+  const { user } = useAuth()
   let router = useRouter()
   const { comments } = useContext(CommentsContext)
 
@@ -90,9 +92,9 @@ export function ArticleLayout({
               </Prose>
             </article>
 
-            <CommentForm isReply={false} />
+            {user ? <CommentForm isReply={false} /> : <LoginToComment />}
 
-            <div id="card-group" className="flex flex-col">
+            <div id="card-group" className="flex flex-col gap-4">
               {(comments || []).length === 0 ? (
                 <EmptyComments />
               ) : (

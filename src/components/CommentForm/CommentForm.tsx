@@ -17,84 +17,20 @@ export interface CommentInputProps {
 
 const CommentForm = (props: {
   isReply: boolean
-  replyingTo?: string
-  groupId?: string
-  onSubmit?: () => void
+  parentId?: string
+  cbAfterSubmit?: () => void
 }) => {
   // Comments Context
-  const { allDataValue, handleAddComment } = useContext(CommentsContext)
-  const [allData, setAllData] = allDataValue
-
-  // Google Firebase Authentication API
+  const { addComment, setComments, comments } = useContext(CommentsContext)
+  const [loading, setLoading] = useState(false)
   const auth = useAuth()
   const signedInUser = auth.user
-  // Get username
-  const username = signedInUser
-    ? formatNoSpaces(signedInUser.name)
-    : allData.demoUser
 
   // Read-only/Editable state of comment from current user
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Error Message Display State
-  const [showError, setShowError] = useState(false)
-
   // Dyanmically display avatar of default demo user if no user logged in or logged in user's avatar if there is a user logged in
-  const avatarImages = allData.users
-  const png = signedInUser
-    ? signedInUser.photo
-    : avatarImages[allData.demoUser].png
-
-  /**
-   * Create a new comment id and comment object body
-   * @param commentContent Text input from the user
-   * @returns A unique comment id and a ready to use comment object
-   */
-  function createComment(commentContent: string) {
-    // Get timestamp
-    const timestamp = getTime()
-    // Create new id
-    const newId = `${username}-${timestamp}`
-    // Create new Comment body
-    const newCommentBody = {
-      id: newId,
-      content: commentContent,
-      createdAt: timestamp,
-      editedAt: timestamp,
-      displayedDate: 'a few seconds ago',
-      score: {},
-      username: username,
-      hasReplies: false,
-    }
-
-    return { newId, newCommentBody }
-  }
-
-  /**
-   * Create a new reply id and reply comment object body
-   * @param replyingTo The username of the comment's recipient
-   * @param replyContent Text input from the user
-   * @returns A unique reply id and a ready to use reply comment object
-   */
-  function createReply(replyingTo: string, replyContent: string) {
-    // Get timestamp
-    const timestamp = getTime()
-    // Create new id
-    const newId = `${username}-${timestamp}`
-    // Create new reply body
-    const newReplyBody = {
-      id: newId,
-      content: replyContent,
-      createdAt: timestamp,
-      editedAt: timestamp,
-      displayedDate: 'a few seconds ago',
-      score: {},
-      replyingTo: replyingTo,
-      username: username,
-    }
-
-    return { newId, newReplyBody }
-  }
+  const png = signedInUser ? signedInUser.photo : '/default-avatar.webp'
 
   /**
    * Submit a new comment after clicking the Send button
@@ -104,25 +40,14 @@ const CommentForm = (props: {
       // Get the value updated in the textarea
       let textVal = textareaRef.current.value
       if (stringOnlySpaces(textVal)) {
-        setShowError(true)
         toast.error('Message is required')
       } else {
-        // // Create new id and comment object
-        // const { newId, newCommentBody } = createComment(textVal)
-        // // Create deep copy of comments context state
-        // let updatedComments = cloneDeep(allData)
-        // // Append this to context
-        // updatedComments.comments[newId] = newCommentBody
-        // // Show Reset Button
-        // updatedComments.showReset = true
-        // // Update context
-        // setAllData(updatedComments)
-
-        // FIXME:
-        await handleAddComment(textVal, null)
+        setLoading(true)
+        await addComment(textVal, null)
         // Clear textarea and error message
         textareaRef.current.value = ''
-        setShowError(false)
+
+        setLoading(false)
       }
     }
   }
@@ -130,53 +55,31 @@ const CommentForm = (props: {
   /**
    * Submit a new comment reply after clicking the Reply button
    */
-  const handleClickReplyButton = (): void => {
-    if (
-      textareaRef.current !== null &&
-      props.groupId &&
-      props.replyingTo &&
-      props.onSubmit
-    ) {
+  const handleClickReplyButton = async () => {
+    if (textareaRef.current !== null && props.parentId) {
       // Get the value updated in the textarea
       let textVal = textareaRef.current.value
       if (stringOnlySpaces(textVal)) {
-        setShowError(true)
+        toast.error('Message is required')
       } else {
-        // Create new id and reply object
-        const { newId, newReplyBody } = createReply(props.replyingTo, textVal)
-        // Create deep copy of comments context state
-        let updatedComments = cloneDeep(allData)
-        // Access replies from context
-        const groupId = props.groupId
-        // Append this to context
-        // Existing comment group exists
-        console.log(groupId)
-        if (updatedComments.replies[groupId]) {
-          updatedComments.replies[groupId][newId] = newReplyBody
-        } else {
-          // No comment group exists, create one
-          updatedComments.comments[groupId].hasReplies = true
-          updatedComments.replies[groupId] = {}
-          updatedComments.replies[groupId][newId] = newReplyBody
-        }
+        setLoading(true)
 
-        // Show Reset Button
-        updatedComments.showReset = true
-        // Update context
-        setAllData(updatedComments)
+        await addComment(textVal, props.parentId)
+
         // Hide Input Field
-        props.onSubmit()
+        props.cbAfterSubmit?.()
         // Clear textarea
         textareaRef.current.value = ''
+        setLoading(false)
       }
     }
   }
 
   const DynamicButton = () => {
     return props.isReply ? (
-      <ReplyButton handleClick={handleClickReplyButton} />
+      <ReplyButton loading={loading} handleClick={handleClickReplyButton} />
     ) : (
-      <SendButton handleClick={handleClickSendButton} />
+      <SendButton loading={loading} handleClick={handleClickSendButton} />
     )
   }
 
@@ -204,7 +107,7 @@ const CommentForm = (props: {
             <CommentAvatar src={png} large={true} />
           </div>
           <div className="flex w-full flex-col gap-2">
-            <Textarea textareaRef={textareaRef} showError={showError} />
+            <Textarea textareaRef={textareaRef} />
           </div>
           <div className="hidden sm:block">
             <DynamicButton />
